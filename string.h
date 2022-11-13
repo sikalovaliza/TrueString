@@ -8,14 +8,14 @@ private:
   size_t capacity = 0;
   
 public:
-  explicit String(size_t size_of_string, char c = '\0') {
-    this->size_of_string = size_of_string;
+  explicit String(size_t size, char c = '\0') {
+    size_of_string = size;
     capacity = 2 * size_of_string;
     str = (char*)malloc(capacity);
     memset(str, c, size_of_string);
   }
   
-  String() = default;
+  String();
   
   String(const String& s): String(s.size_of_string, '\0') {
     memcpy(str, s.str, size_of_string);
@@ -25,16 +25,15 @@ public:
   
   String(std::initializer_list<char> lst) {
     size_of_string = lst.size();
-    str = (char*)malloc(2 * size_of_string);
     capacity = 2 * size_of_string;
+    str = (char*)malloc(capacity);
     std::copy(lst.begin(), lst.end(), str);
   }
   
-  // malloc, realloc, calloc == C, free
   String& operator+=(const String& rhs) {
     while (size_of_string + rhs.size_of_string >= capacity) {
         str = (char*)realloc(str, 2 * size_of_string);
-        capacity *= 2;
+        capacity <<= 1;
     }
     memcpy(str + size_of_string, rhs.str, rhs.size_of_string);
     size_of_string += rhs.size_of_string;
@@ -47,7 +46,7 @@ public:
   }
   
   char& operator[](size_t index) {
-    return str[index]; // == *(str + index)
+    return str[index];
   }
   
   const char& operator[](size_t index) const {
@@ -59,7 +58,7 @@ public:
   }
   
   bool operator!=(const String& rhs) const {
-    return strcmp(str, rhs.str) != 0;
+    return !(*this == rhs);
   }
   
   bool operator<(const String& rhs) const {
@@ -81,70 +80,67 @@ public:
   friend std::ostream& operator<<(std::ostream &out, const String &String);
   friend std::istream& operator>>(std::istream &in, String &String);
   
- String Substr(size_t start, size_t count) {
+ String substr(size_t start, size_t count) {
     String new_string;
-    new_string.str = (char*)malloc(2 * count);
-    new_string.size_of_string = count;
     new_string.capacity = 2 * count;
-    std::copy(str + start, str + count - 1, new_string.str);
+    new_string.str = (char*)malloc(new_string.capacity);
+    new_string.size_of_string = count;
+    memcpy(new_string.str, str + start, count - 1);
    return new_string;
  }
   
-  size_t Find(String substring) {
+  size_t find(String substring) {
     size_t count = 0;
     size_t index_substring = 0;
-    for (size_t index = 0; index < size_of_string; ++index) {
+    size_t index = 0;
+    while (index < size_of_string) {
       if (str[index] == substring[index_substring]) {
         ++count;
         ++index_substring;
-        if (count == substring.Size()) {
+        if (count == substring.size()) {
           return index - count + 1;
         }
       } else {
+        index -= count;
         count = 0;
         index_substring = 0;
-        if (str[index] == substring[0]) {
-          ++count;
-          ++index_substring;
-        }
       }
+      ++index;
     }
     return size_of_string;
   }
                                  
-  size_t Rfind(String substring) {
+  size_t rfind(String substring) {
     size_t count = 0;
     size_t index_substring = substring.size_of_string - 1;
-    for (size_t index = size_of_string - 1; index < size_of_string; --index) {
+    size_t index = size_of_string - 1;
+    while (index < size_of_string) {
       if (str[index] == substring[index_substring]) {
         ++count;
         --index_substring;
-        if (count == substring.Size()) {
+        if (count == substring.size()) {
           return index;
         }
       } else {
+        index += count;
         count = 0;
-        index_substring = 0;
-        if (str[index] == substring[substring.size_of_string - 1]) {
-          ++count;
-          --index_substring;
-        }
-
+        index_substring = substring.size_of_string - 1;
       }
+      --index;
     }
     return size_of_string;
   }
                                  
-  void Push_back(char add) {
+  void push_back(char add) {
     if (size_of_string + 1 == capacity) {
       str = (char*)realloc(str, size_of_string * 2);
       capacity *= 2;
     }
     str[size_of_string] = add;
-    size_of_string += 1;
+    ++size_of_string;
    }
   
-  void Pop_back() {
+  void pop_back() {
     size_of_string -= 1;
     str[size_of_string] = '\0';
   }
@@ -158,43 +154,43 @@ public:
     str = (char*)realloc(str, size_of_string);
   }
   
- size_t Length() const {
+ size_t length() const {
     return size_of_string;
   }
   
-  size_t Size() const {
+  size_t size() const {
      return size_of_string;
    }
   
   size_t Capacity() const {
-     return this->capacity;
+     return capacity;
    }
   
- const char& Front() const {
+ const char& front() const {
     return str[0];
   }
   
- char& Front() {
+ char& front() {
      return str[0];
   }
   
- const char& Back() const {
+ const char& back() const {
     return str[size_of_string - 1];
   }
   
-  char& Back() {
+  char& back() {
     return str[size_of_string - 1];
   }
   
-  bool Empty() const{
+  bool empty() const{
     return size_of_string == 0;
   }
   
-  char* Data() {
+  char* data() {
     return str;
   }
   
-  const char* Data() const {
+  const char* data() const {
     return str;
   }
   
@@ -206,7 +202,7 @@ public:
 };
 
 std::ostream& operator<<(std::ostream &out, const String &new_string) {
-  out << new_string.Data();
+  out << new_string.data();
   return out;
 }
 
